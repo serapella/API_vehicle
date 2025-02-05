@@ -25,7 +25,6 @@ app.use("/voertuig", vehicleRoutes);
 // Database connection
 const connectDB = async (): Promise<boolean> => {
   try {
-    // Use local MongoDB in development, live in production
     const mongoUri =
       process.env.NODE_ENV === "production"
         ? process.env.MONGODB_URI_LIVE
