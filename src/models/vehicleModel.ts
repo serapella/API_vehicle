@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 export type VehicleType = "auto" | "moto";
 
-export interface IVehicle extends mongoose.Document {
+export interface IVehicle {
   type: VehicleType;
   merk: string;
   model: string;
@@ -11,7 +11,12 @@ export interface IVehicle extends mongoose.Document {
   cilinderinhoud?: number;
 }
 
-const vehicleSchema = new mongoose.Schema({
+export interface IVehicleResponse extends IVehicle {
+  _id: string;
+  rijbewijs?: string;
+}
+
+const vehicleSchema = new mongoose.Schema<IVehicle>({
   type: {
     type: String,
     enum: ["auto", "moto"],

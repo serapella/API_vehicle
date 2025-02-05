@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { Vehicle, IVehicle } from "../models/vehicleModel.js";
+import { Vehicle, IVehicle, IVehicleResponse } from "../models/vehicleModel.js";
 
 const getLicenseType = (cilinderinhoud: number): string => {
   if (cilinderinhoud <= 125) return "A1";
@@ -32,12 +32,17 @@ export const getVehicles = async (
 
     const total = await Vehicle.countDocuments(query);
 
-    const vehiclesWithLicense = vehicles.map((vehicle) => {
+    const vehiclesWithLicense = vehicles.map((vehicle): IVehicleResponse => {
       const vehicleObj = vehicle.toObject();
+      const response: IVehicleResponse = {
+        ...vehicleObj,
+        _id: vehicleObj._id.toString(),
+      };
+
       if (vehicle.type === "moto") {
-        vehicleObj.rijbewijs = getLicenseType(vehicle.cilinderinhoud || 0);
+        response.rijbewijs = getLicenseType(vehicle.cilinderinhoud || 0);
       }
-      return vehicleObj;
+      return response;
     });
 
     res.status(200).json({
@@ -63,11 +68,16 @@ export const getVehicleById = async (
     }
 
     const vehicleObj = vehicle.toObject();
+    const response: IVehicleResponse = {
+      ...vehicleObj,
+      _id: vehicleObj._id.toString(),
+    };
+
     if (vehicle.type === "moto") {
-      vehicleObj.rijbewijs = getLicenseType(vehicle.cilinderinhoud || 0);
+      response.rijbewijs = getLicenseType(vehicle.cilinderinhoud || 0);
     }
 
-    res.status(200).json(vehicleObj);
+    res.status(200).json(response);
   } catch (error) {
     res.status(500).json({ message: "Error fetching vehicle", error });
   }
