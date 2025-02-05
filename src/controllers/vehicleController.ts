@@ -1,165 +1,102 @@
+// src/controllers/vehicleController.ts
 import { Request, Response } from "express";
 import { Vehicle } from "../models/VehicleModel";
 
-const getLicenseType = (cilinderinhoud: number): string => {
-  if (cilinderinhoud <= 125) return "A1";
-  if (cilinderinhoud <= 500) return "A2";
-  return "A";
-};
-
-// 🚗 Get all vehicles with optional filters and pagination
-export const getVehicles = async (req: Request, res: Response) => {
-  try {
-    const { type, minPrijs, maxPrijs, page = "1", limit = "10" } = req.query;
-
-    const query: Record<string, any> = {};
-
-    if (type) query.type = type;
-    if (minPrijs || maxPrijs) {
-      query.prijs = {};
-      if (minPrijs) query.prijs.$gte = Number(minPrijs);
-      if (maxPrijs) query.prijs.$lte = Number(maxPrijs);
-    }
-
-    const skip = (Number(page) - 1) * Number(limit);
-    const vehicles = await Vehicle.find(query).skip(skip).limit(Number(limit));
-
-    const total = await Vehicle.countDocuments(query);
-
-    const vehiclesWithLicense = vehicles.map((vehicle) => {
-      const vehicleObj = vehicle.toObject();
-      if (vehicle.type === "moto" && vehicle.cilinderinhoud) {
-        vehicleObj.rijbewijs = getLicenseType(vehicle.cilinderinhoud);
-      }
-      return vehicleObj;
-    });
-
-    res.status(200).json({
-      vehicles: vehiclesWithLicense,
-      totalPages: Math.ceil(total / Number(limit)),
-      currentPage: Number(page),
-      total,
-    });
-  } catch (error) {
-    console.error(error);
-    res
-      .status(500)
-      .json({
-        message: "Server error",
-        error: error instanceof Error ? error.message : error,
-      });
-  }
-};
-
-// 🏍️ Get a single vehicle by ID
-export const getVehicleById = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const vehicle = await Vehicle.findById(id);
-
-    if (!vehicle) {
-      return res
-        .status(404)
-        .json({ message: `Vehicle with id ${id} not found` });
-    }
-
-    const vehicleObj = vehicle.toObject();
-    if (vehicle.type === "moto" && vehicle.cilinderinhoud) {
-      vehicleObj.rijbewijs = getLicenseType(vehicle.cilinderinhoud);
-    }
-
-    res.status(200).json(vehicleObj);
-  } catch (error) {
-    console.error(error);
-    res
-      .status(500)
-      .json({
-        message: "Server error",
-        error: error instanceof Error ? error.message : error,
-      });
-  }
-};
-
-// ➕ Add a new vehicle
 export const addVehicle = async (req: Request, res: Response) => {
   try {
-    const { type, merk, model, bouwjaar, prijs, cilinderinhoud } = req.body;
+    const { type, merk, model, bouwjaar, prijs, cilinderinhoud, rijbewijs } =
+      req.body;
 
-    if (!type || !merk || !model || !bouwjaar || !prijs) {
-      return res.status(400).json({ message: "Missing required fields" });
-    }
+    const newVehicle = new Vehicle({
+      type,
+      merk,
+      model,
+      bouwjaar,
+      prijs,
+      cilinderinhoud,
+      rijbewijs,
+    });
 
-    const vehicle = new Vehicle(req.body);
-
-    if (type === "moto" && cilinderinhoud) {
-      vehicle.rijbewijs = getLicenseType(cilinderinhoud);
-    }
-
-    await vehicle.save();
-    res.status(201).json(vehicle);
+    await newVehicle.save();
+    res.status(201).json(newVehicle);
   } catch (error) {
-    console.error(error);
-    res
-      .status(500)
-      .json({
-        message: "Server error",
-        error: error instanceof Error ? error.message : error,
-      });
+    console.error("Error adding vehicle:", error);
+    res.status(500).json({ message: "Error adding vehicle" });
   }
 };
 
-// ✏️ Update an existing vehicle
-export const updateVehicle = async (req: Request, res: Response) => {
+// Get all vehicles or filter by parameters
+export const getVehicles = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
-    const { type, cilinderinhoud } = req.body;
+    const { type, minPrijs, maxPrijs, page = 1, limit = 10 } = req.query;
 
-    const vehicle = await Vehicle.findById(id);
+    const query: any = {};
+
+    if (type) query.type = type;
+    if (minPrijs) query.prijs = { $gte: Number(minPrijs) };
+    if (maxPrijs) query.prijs = { ...query.prijs, $lte: Number(maxPrijs) };
+
+    const vehicles = await Vehicle.find(query)
+      .skip((Number(page) - 1) * Number(limit))
+      .limit(Number(limit));
+    const total = await Vehicle.countDocuments(query);
+    const totalPages = Math.ceil(total / Number(limit));
+
+    res.status(200).json({ vehicles, total, totalPages, currentPage: page });
+  } catch (error) {
+    console.error("Error fetching vehicles:", error);
+    res.status(500).json({ message: "Error fetching vehicles" });
+  }
+};
+
+// Get a specific vehicle by ID
+export const getVehicleById = async (req: Request, res: Response) => {
+  try {
+    const vehicle = await Vehicle.findById(req.params.id);
+
     if (!vehicle) {
-      return res
-        .status(404)
-        .json({ message: `Vehicle with id ${id} not found` });
+      return res.status(404).json({ message: "Vehicle not found" });
     }
 
-    Object.assign(vehicle, req.body);
-
-    if (type === "moto" && cilinderinhoud) {
-      vehicle.rijbewijs = getLicenseType(cilinderinhoud);
-    }
-
-    await vehicle.save();
     res.status(200).json(vehicle);
   } catch (error) {
-    console.error(error);
-    res
-      .status(500)
-      .json({
-        message: "Server error",
-        error: error instanceof Error ? error.message : error,
-      });
+    console.error("Error fetching vehicle by ID:", error);
+    res.status(500).json({ message: "Error fetching vehicle by ID" });
   }
 };
 
-// Delete a vehicle
-export const deleteVehicle = async (req: Request, res: Response) => {
+// Update a vehicle by ID
+export const updateVehicle = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
-    const deletedVehicle = await Vehicle.findByIdAndDelete(id);
+    const updatedVehicle = await Vehicle.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
 
-    if (!deletedVehicle) {
-      return res
-        .status(404)
-        .json({ message: `Vehicle with id ${id} not found` });
+    if (!updatedVehicle) {
+      return res.status(404).json({ message: "Vehicle not found" });
     }
 
-    res.status(200).json({ message: `Vehicle with id ${id} deleted` });
+    res.status(200).json(updatedVehicle);
   } catch (error) {
-    console.error(error);
-    res
-      .status(500)
-      .json({
-        message: "Server error",
-        error: error instanceof Error ? error.message : error,
-      });
+    console.error("Error updating vehicle:", error);
+    res.status(500).json({ message: "Error updating vehicle" });
+  }
+};
+
+// Delete a vehicle by ID
+export const deleteVehicle = async (req: Request, res: Response) => {
+  try {
+    const vehicle = await Vehicle.findByIdAndDelete(req.params.id);
+
+    if (!vehicle) {
+      return res.status(404).json({ message: "Vehicle not found" });
+    }
+
+    res.status(200).json({ message: "Vehicle successfully deleted" });
+  } catch (error) {
+    console.error("Error deleting vehicle:", error);
+    res.status(500).json({ message: "Error deleting vehicle" });
   }
 };

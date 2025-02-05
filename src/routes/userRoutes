@@ -1,0 +1,19 @@
+// src/routes/userRoutes.ts
+import express from "express";
+import { addToFavorites } from "../controllers/userController";
+
+const router = express.Router();
+
+// Voeg een voertuig toe aan de favorieten van een gebruiker
+router.post("/users/:userId/favorites/:vehicleId", async (req, res) => {
+  const { userId, vehicleId } = req.params;
+
+  try {
+    const updatedUser = await addToFavorites(userId, vehicleId);
+    res.status(200).json(updatedUser);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+export default router;

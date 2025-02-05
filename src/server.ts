@@ -3,6 +3,7 @@ import cors from "cors";
 import express from "express";
 import mongoose from "mongoose";
 import vehicleRoutes from "./routes/vehicleRoutes";
+import userRoutes from "./routes/userRoutes";
 import swaggerJsdoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
 import { exit } from "process";
@@ -38,6 +39,7 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs)); // Swagger UI
 
 // Routes
 app.use("/voertuig", vehicleRoutes);
+app.use("/users", userRoutes);
 
 // Connect to MongoDB and start the server
 (async () => {
