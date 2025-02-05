@@ -5,7 +5,7 @@ import {
   updateVehicle,
   getVehicleById,
   deleteVehicle,
-} from "../controllers/vehicleController.js";
+} from "../controllers/vehicleController";
 
 const router = express.Router();
 
