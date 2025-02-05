@@ -1,8 +1,8 @@
-import mongoose, { Document } from 'mongoose';
+import mongoose from "mongoose";
 
-export type VehicleType = 'auto' | 'moto';
+export type VehicleType = "auto" | "moto";
 
-export interface IVehicle extends Document {
+export interface IVehicle extends mongoose.Document {
   type: VehicleType;
   merk: string;
   model: string;
@@ -14,31 +14,31 @@ export interface IVehicle extends Document {
 const vehicleSchema = new mongoose.Schema({
   type: {
     type: String,
-    enum: ['auto', 'moto'],
-    required: true
+    enum: ["auto", "moto"],
+    required: true,
   },
   merk: {
     type: String,
-    required: true
+    required: true,
   },
   model: {
     type: String,
-    required: true
+    required: true,
   },
   bouwjaar: {
     type: Number,
-    required: true
+    required: true,
   },
   prijs: {
     type: Number,
-    required: true
+    required: true,
   },
   cilinderinhoud: {
     type: Number,
-    required: function(this: IVehicle) {
-      return this.type === 'moto';
-    }
-  }
+    required: function (this: IVehicle) {
+      return this.type === "moto";
+    },
+  },
 });
 
-export const Vehicle = mongoose.model<IVehicle>('Vehicle', vehicleSchema);
+export const Vehicle = mongoose.model<IVehicle>("Vehicle", vehicleSchema);

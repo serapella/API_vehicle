@@ -2,9 +2,9 @@ import "dotenv/config";
 import cors from "cors";
 import express from "express";
 import mongoose from "mongoose";
-import vehicleRoutes from "./routes/vehicleRoutes";
+import vehicleRoutes from "./routes/vehicleRoutes.js";
 import swaggerUi from "swagger-ui-express";
-import { specs } from "./swagger";
+import { specs } from "./swagger.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
