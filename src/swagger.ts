@@ -23,3 +23,5 @@ const options = {
 };
 
 export const specs = swaggerJsdoc(options);
+
+console.log("API URL:", process.env.API_URL);
