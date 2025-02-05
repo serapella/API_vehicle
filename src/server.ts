@@ -22,6 +22,12 @@ app.get("/health", (_req, res) => {
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
 app.use("/voertuig", vehicleRoutes);
 
+console.log("NODE_ENV:", process.env.NODE_ENV);
+console.log(
+  "MONGODB_URI_LIVE:",
+  process.env.MONGODB_URI_LIVE ? "Loaded" : "Not Found"
+);
+
 // Database connection
 const connectDB = async (): Promise<boolean> => {
   try {
